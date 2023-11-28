@@ -55,13 +55,14 @@ func NewConductor() *Conductor {
 func (c *Conductor) Conduct(context context.Context) {
 	fmt.Println("Hello.")
 
-	inputChannel := inputter()
 	err := c.driver.Start()
 	if err != nil {
 		fmt.Printf("Unable to start driver. Error: %+v\n", err)
 		listPorts()
 		log.Fatalf("\nQutting...\n")
 	}
+
+	inputChannel := inputter()
 
 	for {
 		select {

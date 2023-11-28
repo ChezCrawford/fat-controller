@@ -5,38 +5,43 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	conductor "firesidechuck.com/fat-controller/internal"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 )
 
 func StartServer(ctx context.Context, con *conductor.Conductor) {
-	mux := http.NewServeMux()
+	r := mux.NewRouter()
 
-	mux.HandleFunc("/active_train/horn", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/active_train/horn", func(w http.ResponseWriter, r *http.Request) {
 		con.Horn()
 		status := http.StatusAccepted
 		w.WriteHeader(status)
 		fmt.Fprint(w, http.StatusText(status))
 	})
 
-	mux.HandleFunc("/active_train/lights/on", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/active_train/lights/on", func(w http.ResponseWriter, r *http.Request) {
 		con.LightsOn()
 		status := http.StatusAccepted
 		w.WriteHeader(status)
 		fmt.Fprint(w, http.StatusText(status))
 	})
 
-	mux.HandleFunc("/active_train/lights/off", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/active_train/lights/off", func(w http.ResponseWriter, r *http.Request) {
 		con.LightsOff()
 		status := http.StatusAccepted
 		w.WriteHeader(status)
 		fmt.Fprint(w, http.StatusText(status))
 	})
 
+	lr := handlers.CombinedLoggingHandler(os.Stdout, r)
+
 	srv := &http.Server{
 		Addr:    ":8080",
-		Handler: mux,
+		Handler: lr,
 	}
 
 	go func() {
