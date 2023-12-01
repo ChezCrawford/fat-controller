@@ -30,7 +30,7 @@ func (d *DccExDriver) Start() (err error) {
 		BaudRate: 115200,
 	}
 
-	port, err := serial.Open(portName, mode)
+	port, err := serial.Open(d.portName, mode)
 	if err != nil {
 		return err
 	}

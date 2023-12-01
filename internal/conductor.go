@@ -8,8 +8,6 @@ import (
 	"os"
 )
 
-var portName = "/dev/tty.usbmodem144301"
-
 type eventChannel chan *Event
 
 type Event struct {
@@ -36,7 +34,7 @@ type Conductor struct {
 	hornState    *FunctionState
 }
 
-func NewConductor() *Conductor {
+func NewConductor(portName string) *Conductor {
 	eventChannel := make(eventChannel, 1024)
 	driver := NewDccExDriver(portName, eventChannel)
 

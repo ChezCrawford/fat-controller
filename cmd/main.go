@@ -13,7 +13,8 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	con := conductor.NewConductor()
+	config := conductor.LoadConfig()
+	con := conductor.NewConductor(config.SerialPortName)
 
 	go func() {
 		con.Conduct(ctx)

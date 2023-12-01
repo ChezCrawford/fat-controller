@@ -11,5 +11,6 @@ require (
 require (
 	github.com/creack/goselect v0.1.2 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
+	github.com/kelseyhightower/envconfig v1.4.0
 	golang.org/x/sys v0.14.0 // indirect
 )
