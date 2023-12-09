@@ -29,14 +29,20 @@ type FunctionState struct {
 }
 
 type Conductor struct {
-	driver       *DccExDriver
+	driver       DccDriver
 	eventChannel eventChannel
 	hornState    *FunctionState
 }
 
-func NewConductor(portName string) *Conductor {
+func NewConductor(portName string, useSimDriver bool) *Conductor {
 	eventChannel := make(eventChannel, 1024)
-	driver := NewDccExDriver(portName, eventChannel)
+
+	var driver DccDriver
+	if useSimDriver {
+		driver = NewSimDriver()
+	} else {
+		driver = NewDccExDriver(portName, eventChannel)
+	}
 
 	hornState := &FunctionState{
 		Id: "f3",

@@ -14,7 +14,8 @@ func main() {
 	defer cancel()
 
 	config := conductor.LoadConfig()
-	con := conductor.NewConductor(config.SerialPortName)
+
+	con := conductor.NewConductor(config.SerialPortName, config.UseSimDriver)
 
 	go func() {
 		con.Conduct(ctx)

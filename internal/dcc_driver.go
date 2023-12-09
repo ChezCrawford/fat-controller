@@ -9,13 +9,18 @@ import (
 	"go.bug.st/serial"
 )
 
+type DccDriver interface {
+	Start() (err error)
+	SendRawCommand(rawCommand string) (err error)
+}
+
 type DccExDriver struct {
 	portName     string
 	port         *serial.Port
 	eventChannel eventChannel
 }
 
-func NewDccExDriver(portName string, eventChannel eventChannel) *DccExDriver {
+func NewDccExDriver(portName string, eventChannel eventChannel) DccDriver {
 	d := &DccExDriver{
 		portName:     portName,
 		port:         nil,
