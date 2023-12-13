@@ -3,7 +3,7 @@ package conductor
 import (
 	"bufio"
 	"fmt"
-	"log"
+	"log/slog"
 	"strings"
 
 	"go.bug.st/serial"
@@ -15,16 +15,18 @@ type DccDriver interface {
 }
 
 type DccExDriver struct {
+	eventChannel eventChannel
+	log          *slog.Logger
 	portName     string
 	port         *serial.Port
-	eventChannel eventChannel
 }
 
-func NewDccExDriver(portName string, eventChannel eventChannel) DccDriver {
+func NewDccExDriver(log *slog.Logger, portName string, eventChannel eventChannel) DccDriver {
 	d := &DccExDriver{
+		eventChannel: eventChannel,
+		log:          log,
 		portName:     portName,
 		port:         nil,
-		eventChannel: eventChannel,
 	}
 
 	return d
@@ -49,13 +51,17 @@ func (d *DccExDriver) Start() (err error) {
 func listPorts() {
 	ports, err := serial.GetPortsList()
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("Unable to get ports list", "error", err)
+		return
 	}
+
 	if len(ports) == 0 {
-		log.Fatal("No serial ports found!")
+		slog.Error("No serial ports found!")
+		return
 	}
+
 	for _, port := range ports {
-		fmt.Printf("Found port: %v\n", port)
+		slog.Info("", "port", port)
 	}
 }
 
@@ -64,7 +70,7 @@ func (d *DccExDriver) reader() {
 		scanner := bufio.NewScanner(*d.port)
 		for scanner.Scan() {
 			packet := scanner.Text()
-			fmt.Printf("[RECEIVED] %+v\n", packet) // Println will add back the final '\n'
+			slog.Debug("received", "packet", packet)
 			event, _ := parsePacket(packet)
 			if event != nil {
 				d.eventChannel <- event
@@ -121,6 +127,6 @@ func (d *DccExDriver) SendRawCommand(rawCommand string) (err error) {
 		return err
 	}
 
-	fmt.Printf("[SENT] %v bytes\n", n)
+	d.log.Info(fmt.Sprintf("Sent %d bytes", n))
 	return nil
 }

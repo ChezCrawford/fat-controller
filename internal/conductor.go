@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 )
 
@@ -32,16 +32,17 @@ type Conductor struct {
 	driver       DccDriver
 	eventChannel eventChannel
 	hornState    *FunctionState
+	log          *slog.Logger
 }
 
-func NewConductor(portName string, useSimDriver bool) *Conductor {
+func NewConductor(log *slog.Logger, portName string, useSimDriver bool) *Conductor {
 	eventChannel := make(eventChannel, 1024)
 
 	var driver DccDriver
 	if useSimDriver {
 		driver = NewSimDriver()
 	} else {
-		driver = NewDccExDriver(portName, eventChannel)
+		driver = NewDccExDriver(log, portName, eventChannel)
 	}
 
 	hornState := &FunctionState{
@@ -53,17 +54,19 @@ func NewConductor(portName string, useSimDriver bool) *Conductor {
 		driver:       driver,
 		eventChannel: eventChannel,
 		hornState:    hornState,
+		log:          log,
 	}
 }
 
-func (c *Conductor) Conduct(context context.Context) {
-	fmt.Println("Hello.")
+func (c *Conductor) Conduct(ctx context.Context) {
+	c.log.InfoContext(ctx, "Hello.")
 
 	err := c.driver.Start()
 	if err != nil {
-		fmt.Printf("Unable to start driver. Error: %+v\n", err)
+		c.log.WarnContext(ctx, "Unable to start driver", "error", err)
 		listPorts()
-		log.Fatalf("\nQutting...\n")
+		c.log.WarnContext(ctx, "Quitting.")
+		os.Exit(1)
 	}
 
 	inputChannel := inputter()
@@ -71,13 +74,15 @@ func (c *Conductor) Conduct(context context.Context) {
 	for {
 		select {
 		case data := <-c.eventChannel:
-			fmt.Printf("Event: %+v\n", *data)
+			c.log.InfoContext(ctx, "Received event", "event", *data)
 		case input := <-inputChannel:
+			c.log.InfoContext(ctx, "Received command", "input", input)
 			if err = c.driver.SendRawCommand(input); err != nil {
-				log.Fatal(err)
+				c.log.ErrorContext(ctx, "error", err)
+				os.Exit(1)
 			}
-		case <-context.Done():
-			fmt.Printf("\nHanging up the hat...\n")
+		case <-ctx.Done():
+			c.log.InfoContext(ctx, "Hanging up the hat.")
 			return
 		}
 	}
@@ -112,7 +117,6 @@ func inputter() chan string {
 		for {
 			fmt.Print("Enter command: ")
 			text, _ := reader.ReadString('\n')
-			fmt.Printf("Received command: %s\n", text)
 			c <- text
 		}
 	}()

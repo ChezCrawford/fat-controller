@@ -1,7 +1,8 @@
 package conductor
 
 import (
-	"log"
+	"log/slog"
+	"os"
 
 	"github.com/kelseyhightower/envconfig"
 )
@@ -15,7 +16,8 @@ func LoadConfig() Config {
 	var c Config
 	err := envconfig.Process("", &c)
 	if err != nil {
-		log.Fatal(err.Error())
+		slog.Error(err.Error())
+		os.Exit(1)
 	}
 
 	return c

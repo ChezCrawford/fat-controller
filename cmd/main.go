@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"os/signal"
 
@@ -10,16 +11,22 @@ import (
 )
 
 func main() {
+	h := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	})
+	log := slog.New(h)
+	slog.SetDefault(log)
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
 	config := conductor.LoadConfig()
 
-	con := conductor.NewConductor(config.SerialPortName, config.UseSimDriver)
+	con := conductor.NewConductor(log, config.SerialPortName, config.UseSimDriver)
 
 	go func() {
 		con.Conduct(ctx)
 	}()
 
-	web.StartServer(ctx, con)
+	web.StartServer(ctx, log, con)
 }

@@ -3,7 +3,7 @@ package web
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func StartServer(ctx context.Context, con *conductor.Conductor) {
+func StartServer(ctx context.Context, log *slog.Logger, con *conductor.Conductor) {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/active_train/horn", func(w http.ResponseWriter, r *http.Request) {
@@ -46,20 +46,22 @@ func StartServer(ctx context.Context, con *conductor.Conductor) {
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+			log.Error("listen", "error", err)
+			os.Exit(1)
 		}
 	}()
 
 	<-ctx.Done()
 
-	log.Println("shutting down gracefully, press Ctrl+C again to force")
+	log.InfoContext(ctx, "shutting down gracefully, press Ctrl+C again to force")
 
 	// Start a new context for shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Server forced to shutdown: ", err)
+		log.ErrorContext(ctx, "Server forced to shutdown", "error", err)
+		os.Exit(1)
 	}
 
-	log.Println("Server exiting")
+	log.InfoContext(ctx, "Server exiting")
 }
