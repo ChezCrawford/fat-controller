@@ -98,6 +98,16 @@ func (c *Conductor) LightsOff() {
 	c.driver.SendRawCommand(cmd)
 }
 
+func (c *Conductor) TrackPowerOn() {
+	cmd := "<1 MAIN>"
+	c.driver.SendRawCommand(cmd)
+}
+
+func (c *Conductor) TrackPowerOff() {
+	cmd := "<0 MAIN>"
+	c.driver.SendRawCommand(cmd)
+}
+
 func (c *Conductor) Horn() {
 	cmd := "<F 65 3 %d>"
 	if c.hornState.On {

@@ -13,7 +13,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func StartServer(ctx context.Context, log *slog.Logger, con *conductor.Conductor) {
+func StartServer(
+	ctx context.Context,
+	log *slog.Logger,
+	con *conductor.Conductor,
+	adminToken string) {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/active_train/horn", func(w http.ResponseWriter, r *http.Request) {
@@ -32,6 +36,25 @@ func StartServer(ctx context.Context, log *slog.Logger, con *conductor.Conductor
 
 	r.HandleFunc("/active_train/lights/off", func(w http.ResponseWriter, r *http.Request) {
 		con.LightsOff()
+		status := http.StatusAccepted
+		w.WriteHeader(status)
+		fmt.Fprint(w, http.StatusText(status))
+	})
+
+	ar := r.PathPrefix("/admin").Subrouter()
+
+	amw := NewAuthenticationMiddleware(adminToken)
+	ar.Use(amw.Middleware)
+
+	ar.HandleFunc("/track/on", func(w http.ResponseWriter, r *http.Request) {
+		con.TrackPowerOn()
+		status := http.StatusAccepted
+		w.WriteHeader(status)
+		fmt.Fprint(w, http.StatusText(status))
+	})
+
+	ar.HandleFunc("/track/off", func(w http.ResponseWriter, r *http.Request) {
+		con.TrackPowerOff()
 		status := http.StatusAccepted
 		w.WriteHeader(status)
 		fmt.Fprint(w, http.StatusText(status))

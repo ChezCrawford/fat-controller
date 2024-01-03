@@ -28,5 +28,5 @@ func main() {
 		con.Conduct(ctx)
 	}()
 
-	web.StartServer(ctx, log, con)
+	web.StartServer(ctx, log, con, config.AdminToken)
 }

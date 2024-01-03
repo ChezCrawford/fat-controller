@@ -8,7 +8,8 @@ import (
 )
 
 type Config struct {
-	SerialPortName string `split_words:"true" required:"true"`
+	AdminToken     string `split_words:"true" default:"my-top-secret-123"`
+	SerialPortName string `split_words:"true"`
 	UseSimDriver   bool   `split_words:"true" default:"false"`
 }
 
